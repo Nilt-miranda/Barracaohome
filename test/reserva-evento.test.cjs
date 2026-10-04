@@ -13,10 +13,10 @@ function load(file) {
   return m.exports;
 }
 
-const { validarReserva, mensagemReserva, linkWhatsApp, mascaraHora, completarHora } =load('lib/reserva-evento.ts');
+const { validarReserva, mensagemReserva, linkWhatsApp, mascaraHora, completarHora, estimarEvento, formatarReais } =load('lib/reserva-evento.ts');
 
 const ok = {
-  nome: ' Maria Silva ', pessoas: '25', tipo: 'Aniversário', data: '2026-11-07',
+  nome: ' Maria Silva ', pessoas: '25', tipo: 'Aniversário', servico: 'Salão com buffet', data: '2026-11-07',
   inicio: '19:00', termino: '23:00', observacoes: '',
 };
 
@@ -30,6 +30,10 @@ test('reserva so e aceita com nome, pessoas, tipo, data futura e horario de inic
     assert.equal(validarReserva({ ...ok, pessoas }, hoje), 'Informe o número de pessoas');
   }
   assert.equal(validarReserva({ ...ok, tipo: '' }, hoje), 'Selecione o tipo de evento');
+  for (const servico of ['', 'Buffet']) {
+    assert.equal(validarReserva({ ...ok, servico }, hoje), 'Escolha entre só o salão ou salão com buffet');
+  }
+  assert.equal(validarReserva({ ...ok, servico: 'Só o salão' }, hoje), null);
   assert.equal(validarReserva({ ...ok, data: '' }, hoje), 'Informe a data do evento');
   assert.equal(validarReserva({ ...ok, data: '2026-10-02' }, hoje), 'A data do evento já passou');
   assert.equal(validarReserva({ ...ok, inicio: '' }, hoje), 'Informe o horário de início');
@@ -55,6 +59,7 @@ test('mensagem leva todos os dados da reserva e omite o que ficou em branco', ()
       '*Nome:* Maria Silva',
       '*Pessoas:* 25',
       '*Tipo de evento:* Aniversário',
+      '*Serviço:* Salão com buffet',
       '*Data:* 07/11/2026',
       '*Horário:* 19:00 às 23:00',
       '*Observações:* Bolo por nossa conta',
@@ -63,6 +68,30 @@ test('mensagem leva todos os dados da reserva e omite o que ficou em branco', ()
   const semTermino = mensagemReserva({ ...ok, termino: '' });
   assert.match(semTermino, /\*Horário:\* a partir das 19:00$/);
   assert.doesNotMatch(semTermino, /Observações/);
+});
+
+test('calculadora soma salao e buffet por pessoa, e nao fecha total sem todos os valores', () => {
+  const precos = { salao: 1500, buffetPorPessoa: 80 };
+  assert.equal(estimarEvento({ servico: '', pessoas: '25' }, precos), null);
+  assert.deepEqual(estimarEvento({ servico: 'Só o salão', pessoas: '' }, precos), {
+    itens: [{ rotulo: 'Aluguel do salão', valor: 1500 }], total: 1500,
+  });
+  assert.deepEqual(estimarEvento({ servico: 'Salão com buffet', pessoas: '25' }, precos), {
+    itens: [{ rotulo: 'Aluguel do salão', valor: 1500 }, { rotulo: 'Buffet (25 pessoas)', valor: 2000 }], total: 3500,
+  });
+  // Sem numero de pessoas o buffet nao tem valor, entao nao ha total.
+  assert.deepEqual(estimarEvento({ servico: 'Salão com buffet', pessoas: '' }, precos), {
+    itens: [{ rotulo: 'Aluguel do salão', valor: 1500 }, { rotulo: 'Buffet', valor: null }], total: null,
+  });
+  // Valores ainda nao definidos pelo restaurante.
+  const semValores = { salao: null, buffetPorPessoa: null };
+  assert.equal(estimarEvento({ servico: 'Só o salão', pessoas: '25' }, semValores).total, null);
+  assert.equal(estimarEvento({ servico: 'Salão com buffet', pessoas: '25' }, { salao: 1500, buffetPorPessoa: null }).total, null);
+
+  assert.equal(formatarReais(3500), 'R$ 3.500,00');
+  assert.match(mensagemReserva(ok, precos), /\n\*Estimativa pelo site:\* R\$ 3\.500,00$/);
+  assert.doesNotMatch(mensagemReserva(ok, semValores), /Estimativa/);
+  assert.doesNotMatch(mensagemReserva(ok), /Estimativa/);
 });
 
 test('link do WhatsApp usa so os digitos do numero e codifica a mensagem', () => {

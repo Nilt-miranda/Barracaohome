@@ -2,6 +2,7 @@ export type ReservaEvento = {
   nome: string;
   pessoas: string;
   tipo: string;
+  servico: string; // um dos SERVICOS
   data: string; // yyyy-mm-dd (input type="date")
   inicio: string; // hh:mm
   termino: string; // hh:mm, opcional
@@ -16,8 +17,11 @@ export const TIPOS_EVENTO = [
   'Outro evento',
 ];
 
+// O que a pessoa quer contratar para o evento.
+export const SERVICOS = ['Só o salão', 'Salão com buffet'];
+
 export const reservaVazia: ReservaEvento = {
-  nome: '', pessoas: '', tipo: '', data: '', inicio: '', termino: '', observacoes: '',
+  nome: '', pessoas: '', tipo: '', servico: '', data: '', inicio: '', termino: '', observacoes: '',
 };
 
 /** Devolve a mensagem do primeiro problema, ou null se dá pra enviar. `hoje` em yyyy-mm-dd. */
@@ -25,6 +29,7 @@ export function validarReserva(r: ReservaEvento, hoje: string): string | null {
   if (!r.nome.trim()) return 'Informe seu nome';
   if (!/^\d+$/.test(r.pessoas.trim()) || Number(r.pessoas) < 1) return 'Informe o número de pessoas';
   if (!r.tipo) return 'Selecione o tipo de evento';
+  if (!SERVICOS.includes(r.servico)) return 'Escolha entre só o salão ou salão com buffet';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(r.data)) return 'Informe a data do evento';
   if (r.data < hoje) return 'A data do evento já passou';
   if (!r.inicio) return 'Informe o horário de início';
@@ -50,18 +55,50 @@ export function completarHora(texto: string): string {
   return `${d.slice(0, 2)}:${d.slice(2, 4)}`;
 }
 
+/** Valores em reais; null = ainda não definido pelo restaurante. */
+export type Precos = { salao: number | null; buffetPorPessoa: number | null };
+
+export type Estimativa = { itens: { rotulo: string; valor: number | null }[]; total: number | null };
+
+/**
+ * Calculadora do evento: aluguel do salão (valor fixo) e, com buffet, valor por pessoa.
+ * Item sem valor definido ou sem número de pessoas fica null, e o total também.
+ * Devolve null enquanto o serviço não foi escolhido.
+ */
+export function estimarEvento(r: Pick<ReservaEvento, 'servico' | 'pessoas'>, precos: Precos): Estimativa | null {
+  if (!SERVICOS.includes(r.servico)) return null;
+  const itens = [{ rotulo: 'Aluguel do salão', valor: precos.salao }];
+  if (r.servico === 'Salão com buffet') {
+    const pessoas = /^\d+$/.test(r.pessoas.trim()) ? Number(r.pessoas) : 0;
+    itens.push({
+      rotulo: pessoas > 0 ? `Buffet (${pessoas} ${pessoas === 1 ? 'pessoa' : 'pessoas'})` : 'Buffet',
+      valor: pessoas > 0 && precos.buffetPorPessoa !== null ? pessoas * precos.buffetPorPessoa : null,
+    });
+  }
+  const total = itens.every((i) => i.valor !== null) ? itens.reduce((soma, i) => soma + (i.valor ?? 0), 0) : null;
+  return { itens, total };
+}
+
+export function formatarReais(valor: number): string {
+  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace(/\s/g, ' ');
+}
+
 const formatData = (d: string) => d.split('-').reverse().join('/');
 
-export function mensagemReserva(r: ReservaEvento): string {
+/** `precos` entra só para levar a estimativa na mensagem, quando ela fecha um total. */
+export function mensagemReserva(r: ReservaEvento, precos?: Precos): string {
   const linhas = [
     'Olá! Gostaria de reservar um evento no Barracão da Praça.',
     '',
     `*Nome:* ${r.nome.trim()}`,
     `*Pessoas:* ${Number(r.pessoas)}`,
     `*Tipo de evento:* ${r.tipo}`,
+    `*Serviço:* ${r.servico}`,
     `*Data:* ${formatData(r.data)}`,
     `*Horário:* ${r.termino ? `${r.inicio} às ${r.termino}` : `a partir das ${r.inicio}`}`,
   ];
+  const total = precos ? estimarEvento(r, precos)?.total : null;
+  if (typeof total === 'number') linhas.push(`*Estimativa pelo site:* ${formatarReais(total)}`);
   if (r.observacoes.trim()) linhas.push(`*Observações:* ${r.observacoes.trim()}`);
   return linhas.join('\n');
 }

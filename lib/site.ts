@@ -4,6 +4,10 @@
 // (ex.: '5511999998888'). Vazio = o WhatsApp abre pedindo pra escolher o contato.
 export const WHATSAPP_EVENTOS: string = '5511988379211';
 
+// Calculadora de eventos, em reais. null = valor ainda não definido (aparece "a definir").
+export const PRECO_SALAO: number | null = null; // aluguel do salão, valor fixo
+export const PRECO_BUFFET_POR_PESSOA: number | null = null;
+
 // Ex.: 'Rua Tal, 123 - Bairro - Cidade/UF'. Vazio = some do contato e do rodapé.
 export const ENDERECO: string = 'Rua Conselheiro Ribas, 283 - Vila Anastácio, São Paulo/SP';
 
