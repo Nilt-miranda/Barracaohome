@@ -76,7 +76,7 @@ export default function Home() {
           <h2 className={`text-3xl sm:text-4xl ${TITULO}`}>Quem faz acontecer</h2>
           <Texto paragrafos={TEXTO_CHEF} pendente="Quem comanda a cozinha — texto a receber" />
         </div>
-        <Foto src={FOTO_CHEF} alt="Cozinha do Barracão da Praça" className="order-first aspect-[4/5] w-full max-w-sm lg:order-none lg:col-span-5 lg:col-start-8 lg:max-w-none" />
+        <Foto src={FOTO_CHEF} alt="Cozinheiro do Barracão da Praça" className="order-first aspect-[2/3] w-full max-w-sm lg:order-none lg:col-span-5 lg:col-start-8 lg:max-w-none" />
        </div>
       </section>
 

@@ -20,7 +20,7 @@ export const INSTAGRAM_URL: string = '';
 // Fotos em frontend/public (ex.: '/site/salao.jpg'). Vazio = fica o espaço reservado.
 export const FOTO_HERO: string = '/site/salao.jpg';
 export const FOTO_HISTORIA: string = '/site/historia.jpg';
-export const FOTO_CHEF: string = '/site/chef.png';
+export const FOTO_CHEF: string = '/site/chef.webp';
 
 // Galeria "O ambiente": cinco fotos, nesta ordem de destaque.
 export const FOTOS_AMBIENTE = [
