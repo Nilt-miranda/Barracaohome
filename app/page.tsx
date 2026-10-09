@@ -40,7 +40,7 @@ export default function Home() {
   const [ambiente, mesas, pratos, bebidas, detalhes] = FOTOS_AMBIENTE;
 
   return (
-    <main className="min-h-screen bg-[#18251D] text-[#E7E0D2] [font-family:DM_Sans,Arial,sans-serif]">
+    <main className="min-h-screen bg-[#1F3125] text-[#E7E0D2] [font-family:DM_Sans,Arial,sans-serif]">
       <Cabecalho />
 
       {/* ---- Início ---- */}
@@ -145,7 +145,7 @@ export default function Home() {
             </div>
           </dl>
         </div>
-        <div className="relative aspect-[3/2] bg-[#18251D] lg:col-span-6 lg:col-start-7">
+        <div className="relative aspect-[3/2] bg-[#1F3125] lg:col-span-6 lg:col-start-7">
           {mapa ? (
             <iframe src={mapa} title="Mapa: Barracão da Praça" loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="absolute inset-0 h-full w-full border-0" />
           ) : (

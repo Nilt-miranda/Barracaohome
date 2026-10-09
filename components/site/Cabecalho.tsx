@@ -16,7 +16,7 @@ export default function Cabecalho() {
   const [aberto, setAberto] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 bg-[#18251D]/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 bg-[#1F3125]/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-7 px-5 sm:px-8">
         <a href="#inicio" aria-label="Barracão da Praça — início" className="mr-auto"><Marca /></a>
 

@@ -17,7 +17,7 @@ const INPUT =
 const PRECOS: Precos = { salao: PRECO_SALAO, buffetPorPessoa: PRECO_BUFFET_POR_PESSOA };
 
 // Lista do select: o navegador abre com fundo próprio, então a cor vai em cada opção.
-const OPCAO = 'bg-[#18251D] text-[#F1E9D5]';
+const OPCAO = 'bg-[#1F3125] text-[#F1E9D5]';
 
 function Campo({ rotulo, htmlFor, className = '', children }: {
   rotulo: string; htmlFor: string; className?: string; children: React.ReactNode;

@@ -53,7 +53,7 @@ export default function BotaoQrCode({ className, rotulo = 'Escanear QR Code' }: 
           aria-label="Escanear QR Code da mesa"
           onClick={fechar}
         >
-          <div className="w-full max-w-sm bg-[#18251D] p-5 text-center" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm bg-[#1F3125] p-5 text-center" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-base font-medium text-[#F1E9D5]">Escaneie o QR Code da mesa</h2>
               <button type="button" onClick={fechar} aria-label="Fechar" className="p-1 text-[#E7E0D2]/70 hover:text-[#F1E9D5]">
