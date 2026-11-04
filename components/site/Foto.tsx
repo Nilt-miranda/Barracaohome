@@ -5,7 +5,7 @@ export default function Foto({ src, alt, className = '', prioridade = false }: {
   src: string; alt: string; className?: string; prioridade?: boolean;
 }) {
   return (
-    <div className={`relative overflow-hidden bg-[#263D2D] ${className}`}>
+    <div className={`relative overflow-hidden bg-[#34503D] ${className}`}>
       {src ? (
         <Image unoptimized fill src={src} alt={alt} loading={prioridade ? 'eager' : 'lazy'} className="object-cover" />
       ) : (

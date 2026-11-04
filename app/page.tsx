@@ -3,17 +3,17 @@ import Foto from '../components/site/Foto';
 import Marca from '../components/site/Marca';
 import ReservaEvento from '../components/site/ReservaEvento';
 import { IconeInstagram, IconeWhatsApp } from '../components/site/icones';
-import { TIPOS_EVENTO, linkWhatsApp } from '../lib/reserva-evento';
+import { formatarReais, linkWhatsApp } from '../lib/reserva-evento';
 import {
-  ENDERECO, FOTO_CHEF, FOTO_HERO, FOTO_HISTORIA, FOTOS_AMBIENTE, HORARIOS,
-  INSTAGRAM_URL, TEXTO_CHEF, TEXTO_HISTORIA, WHATSAPP_EVENTOS,
+  CARDAPIO_EVENTOS, ENDERECO, FOTO_CHEF, FOTO_HERO, FOTO_HISTORIA, FOTOS_AMBIENTE, FOTOS_EVENTOS, HORARIOS,
+  INCLUSO_SALAO, INSTAGRAM_URL, NOTA_BUFFETS, SLOGAN, TEXTO_CHEF, TEXTO_EVENTOS, TEXTO_HISTORIA, WHATSAPP_EVENTOS,
 } from '../lib/site';
 
 const TITULO = 'font-medium leading-tight text-[#F1E9D5] [font-family:Bitter,Georgia,serif]';
 const LINK = 'transition-colors hover:text-[#F1E9D5]';
 
 // Faixas da página alternam entre o verde escuro (fundo do <main>) e o verde claro.
-const CLARO = 'bg-[#263D2D]';
+const CLARO = 'bg-[#34503D]';
 const FAIXA = 'mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:py-24';
 
 const whatsapp = linkWhatsApp(WHATSAPP_EVENTOS, 'Olá! Vim pelo site do Barracão da Praça.');
@@ -37,10 +37,11 @@ function Texto({ paragrafos, pendente }: { paragrafos: string[]; pendente: strin
 }
 
 export default function Home() {
-  const [ambiente, mesas, pratos, bebidas, detalhes] = FOTOS_AMBIENTE;
+  const [foto1, foto2, foto3, foto4, foto5] = FOTOS_AMBIENTE;
+  const { salao, capacidadeSalao, buffets } = CARDAPIO_EVENTOS;
 
   return (
-    <main className="min-h-screen bg-[#1F3125] text-[#E7E0D2] [font-family:DM_Sans,Arial,sans-serif]">
+    <main className="min-h-screen bg-[#2B4433] text-[#E7E0D2] [font-family:DM_Sans,Arial,sans-serif]">
       <Cabecalho />
 
       {/* ---- Início ---- */}
@@ -48,7 +49,7 @@ export default function Home() {
         <Foto src={FOTO_HERO} alt="Salão do Barracão da Praça" prioridade className="aspect-[4/3] lg:order-2 lg:col-span-8 lg:aspect-[3/2]" />
         <div className="lg:order-1 lg:col-span-4 lg:pb-4">
           <h1 className={`text-4xl sm:text-5xl ${TITULO}`}>Barracão da Praça</h1>
-          <p className="mt-4 text-lg leading-relaxed">Comida brasileira, cerveja gelada e bons momentos.</p>
+          <p className="mt-4 text-lg leading-relaxed">{SLOGAN}</p>
           <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-4">
             <a href="#eventos" className="bg-[#C98732] px-5 py-3 font-medium text-[#171512] transition-colors hover:bg-[#d7953f]">
               Organize seu evento
@@ -85,13 +86,39 @@ export default function Home() {
         <div className={`grid gap-12 lg:grid-cols-12 ${FAIXA}`}>
           <div className="lg:col-span-5">
             <h2 className={`text-4xl sm:text-5xl ${TITULO}`}>Vai comemorar?</h2>
-            <p className="mt-5 text-lg leading-relaxed">
-              Aniversários, confraternizações, encontros de empresas ou simplesmente uma boa desculpa para reunir a
-              turma.
-            </p>
-            <ul className="mt-8 space-y-2 text-lg text-[#F1E9D5] [font-family:Bitter,Georgia,serif]">
-              {TIPOS_EVENTO.map((t) => <li key={t}>{t}</li>)}
-            </ul>
+            <Texto paragrafos={TEXTO_EVENTOS} pendente="Texto de eventos a receber" />
+
+            <div className="mt-10 border-t border-[#F1E9D5]/20 pt-8">
+              <p className="text-sm uppercase tracking-wide text-[#E7E0D2]/60">Locação do espaço</p>
+              <p className={`mt-2 text-3xl ${TITULO}`}>
+                {salao === null ? 'Valor a combinar' : formatarReais(salao)}
+                <span className="ml-2 text-base text-[#E7E0D2]/70 [font-family:DM_Sans,Arial,sans-serif]">para até {capacidadeSalao} pessoas</span>
+              </p>
+              <ul className="mt-4 space-y-1.5">
+                {INCLUSO_SALAO.map((i) => <li key={i}>{i}</li>)}
+              </ul>
+            </div>
+
+            <div className="mt-8 border-t border-[#F1E9D5]/20 pt-8">
+              <p className="text-sm uppercase tracking-wide text-[#E7E0D2]/60">Prefere um evento completo?</p>
+              <p className="mt-2 text-lg text-[#F1E9D5]">Escolha um dos nossos buffets e não pague o aluguel do salão.</p>
+              <dl className="mt-4 space-y-2.5">
+                {buffets.map((b) => (
+                  <div key={b.nome} className="flex items-baseline justify-between gap-4">
+                    <dt>
+                      <span className="text-lg text-[#F1E9D5] [font-family:Bitter,Georgia,serif]">{b.nome}</span>
+                      {b.carnes?.length ? <span className="block text-sm text-[#E7E0D2]/60">{b.carnes.join(' ou ')}</span> : null}
+                    </dt>
+                    <dd className="shrink-0">{b.precoPorPessoa === null ? 'a combinar' : `${formatarReais(b.precoPorPessoa)} por pessoa`}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="mt-4 text-sm text-[#E7E0D2]/60">{NOTA_BUFFETS}</p>
+            </div>
+
+            <div className="mt-10 grid grid-cols-3 gap-3">
+              {FOTOS_EVENTOS.map((foto) => <Foto key={foto.src} {...foto} className="aspect-[3/4]" />)}
+            </div>
           </div>
           <div className="lg:col-span-6 lg:col-start-7">
             <p className="mb-8 leading-relaxed">
@@ -106,11 +133,11 @@ export default function Home() {
       <section id="ambiente" className={`scroll-mt-16 ${FAIXA}`}>
         <h2 className={`text-3xl sm:text-4xl ${TITULO}`}>O ambiente</h2>
         <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-12">
-          <Foto {...ambiente} className="col-span-2 aspect-[3/2] lg:col-span-7" />
-          <Foto {...mesas} className="aspect-[4/5] lg:col-span-5 lg:aspect-auto" />
-          <Foto {...pratos} className="aspect-[4/5] lg:col-span-4 lg:aspect-square" />
-          <Foto {...bebidas} className="aspect-square lg:col-span-3 lg:aspect-auto" />
-          <Foto {...detalhes} className="aspect-square lg:col-span-5 lg:aspect-auto" />
+          <Foto {...foto1} className="col-span-2 aspect-[3/2] lg:col-span-7" />
+          <Foto {...foto2} className="aspect-[4/5] lg:col-span-5 lg:aspect-auto" />
+          <Foto {...foto3} className="aspect-[4/5] lg:col-span-4 lg:aspect-square" />
+          <Foto {...foto4} className="aspect-square lg:col-span-3 lg:aspect-auto" />
+          <Foto {...foto5} className="aspect-square lg:col-span-5 lg:aspect-auto" />
         </div>
       </section>
 
@@ -145,7 +172,7 @@ export default function Home() {
             </div>
           </dl>
         </div>
-        <div className="relative aspect-[3/2] bg-[#1F3125] lg:col-span-6 lg:col-start-7">
+        <div className="relative aspect-[3/2] bg-[#2B4433] lg:col-span-6 lg:col-start-7">
           {mapa ? (
             <iframe src={mapa} title="Mapa: Barracão da Praça" loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="absolute inset-0 h-full w-full border-0" />
           ) : (

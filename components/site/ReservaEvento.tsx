@@ -4,20 +4,26 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
-  SERVICOS, TIPOS_EVENTO, completarHora, estimarEvento, formatarReais, linkWhatsApp, mascaraHora, mensagemReserva,
-  reservaVazia, validarReserva,
-  type Precos, type ReservaEvento as Reserva,
+  COM_BUFFET, SERVICOS, TIPOS_EVENTO, completarHora, estimarEvento, formatarReais, linkWhatsApp, mascaraHora,
+  mensagemReserva, reservaVazia, validarReserva,
+  type ReservaEvento as Reserva,
 } from '../../lib/reserva-evento';
-import { PRECO_BUFFET_POR_PESSOA, PRECO_SALAO, WHATSAPP_EVENTOS } from '../../lib/site';
+import { CARDAPIO_EVENTOS as CARDAPIO, NOTA_BUFFETS, WHATSAPP_EVENTOS } from '../../lib/site';
 import { IconeWhatsApp } from './icones';
 
 const INPUT =
   'w-full rounded-none border-b border-[#F1E9D5]/30 bg-transparent py-2.5 text-base text-[#F1E9D5] placeholder-[#E7E0D2]/40 transition-colors focus:border-[#C98732] focus:outline-none [color-scheme:dark]';
 
-const PRECOS: Precos = { salao: PRECO_SALAO, buffetPorPessoa: PRECO_BUFFET_POR_PESSOA };
-
 // Lista do select: o navegador abre com fundo próprio, então a cor vai em cada opção.
-const OPCAO = 'bg-[#1F3125] text-[#F1E9D5]';
+const OPCAO = 'bg-[#2B4433] text-[#F1E9D5]';
+
+// Cartão de escolha (radio/checkbox escondido): dourado quando marcado.
+const cartao = (marcado: boolean) =>
+  `cursor-pointer border px-4 py-3 text-base transition-colors has-[:focus-visible]:border-[#C98732] ${
+    marcado ? 'border-[#C98732] bg-[#C98732] font-medium text-[#171512]' : 'border-[#F1E9D5]/30 text-[#F1E9D5] hover:border-[#F1E9D5]/60'
+  }`;
+
+const precoPorPessoa = (valor: number | null) => (valor === null ? 'a combinar' : `${formatarReais(valor)} por pessoa`);
 
 function Campo({ rotulo, htmlFor, className = '', children }: {
   rotulo: string; htmlFor: string; className?: string; children: React.ReactNode;
@@ -32,7 +38,7 @@ function Campo({ rotulo, htmlFor, className = '', children }: {
 
 export default function ReservaEvento() {
   const [f, setF] = useState<Reserva>(reservaVazia);
-  const set = (campo: keyof Reserva) =>
+  const set = (campo: 'nome' | 'pessoas' | 'tipo' | 'servico' | 'carne' | 'bolo' | 'data' | 'observacoes') =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setF((atual) => ({ ...atual, [campo]: e.target.value }));
 
@@ -41,19 +47,31 @@ export default function ReservaEvento() {
   const fecharHora = (campo: 'inicio' | 'termino') => () =>
     setF((atual) => ({ ...atual, [campo]: completarHora(atual[campo]) }));
 
-  const estimativa = estimarEvento(f, PRECOS);
-  const reais = (valor: number | null) => (valor === null ? 'a definir' : formatarReais(valor));
+  // Trocar de buffet zera a carne: cada buffet tem as suas opções (ou nenhuma).
+  const escolherBuffet = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setF((atual) => ({ ...atual, buffet: e.target.value, carne: '' }));
+  const alternarDocinho = (d: string) => () =>
+    setF((atual) => ({
+      ...atual,
+      docinhos: atual.docinhos.includes(d) ? atual.docinhos.filter((x) => x !== d) : [...atual.docinhos, d],
+    }));
+
+  const comBuffet = f.servico === COM_BUFFET;
+  const buffet = comBuffet ? CARDAPIO.buffets.find((b) => b.nome === f.buffet) : undefined;
+  const estimativa = estimarEvento(f, CARDAPIO);
+  const reais = (i: { valor: number | null; incluso?: boolean }) =>
+    i.incluso ? 'Incluso' : i.valor === null ? 'a combinar' : formatarReais(i.valor);
 
   const enviar = (e: React.FormEvent) => {
     e.preventDefault();
     const agora = new Date();
     const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
-    const problema = validarReserva(f, hoje);
+    const problema = validarReserva(f, hoje, CARDAPIO);
     if (problema) {
       toast.error(problema);
       return;
     }
-    window.open(linkWhatsApp(WHATSAPP_EVENTOS, mensagemReserva(f, PRECOS)), '_blank', 'noopener,noreferrer');
+    window.open(linkWhatsApp(WHATSAPP_EVENTOS, mensagemReserva(f, CARDAPIO)), '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -80,14 +98,68 @@ export default function ReservaEvento() {
         <legend className="text-sm text-[#E7E0D2]/70">O que você precisa</legend>
         <div className="mt-2.5 grid grid-cols-2 gap-3">
           {SERVICOS.map((s) => (
-            <label
-              key={s}
-              className={`cursor-pointer border px-4 py-3 text-center text-base transition-colors has-[:focus-visible]:border-[#C98732] ${
-                f.servico === s ? 'border-[#C98732] bg-[#C98732] font-medium text-[#171512]' : 'border-[#F1E9D5]/30 text-[#F1E9D5] hover:border-[#F1E9D5]/60'
-              }`}
-            >
+            <label key={s} className={`${cartao(f.servico === s)} text-center`}>
               <input type="radio" name="ev-servico" value={s} checked={f.servico === s} onChange={set('servico')} className="sr-only" />
               {s}
+            </label>
+          ))}
+        </div>
+        {comBuffet && <p className="mt-2.5 text-sm text-[#E7E0D2]/60">Com buffet, o aluguel do salão sai de graça.</p>}
+      </fieldset>
+
+      {comBuffet && (
+        <fieldset className="col-span-6">
+          <legend className="text-sm text-[#E7E0D2]/70">Buffet</legend>
+          <div className="mt-2.5 grid gap-3 sm:grid-cols-3">
+            {CARDAPIO.buffets.map((b) => (
+              <label key={b.nome} className={cartao(f.buffet === b.nome)}>
+                <input type="radio" name="ev-buffet" value={b.nome} checked={f.buffet === b.nome} onChange={escolherBuffet} className="sr-only" />
+                <span className="block">{b.nome}</span>
+                <span className={`block text-sm ${f.buffet === b.nome ? 'text-[#171512]/80' : 'text-[#E7E0D2]/60'}`}>{precoPorPessoa(b.precoPorPessoa)}</span>
+              </label>
+            ))}
+          </div>
+          <p className="mt-2.5 text-sm text-[#E7E0D2]/60">{NOTA_BUFFETS}</p>
+          {buffet?.carnes?.length ? (
+            <Campo rotulo="Carne" htmlFor="ev-carne" className="mt-5 sm:w-1/2">
+              <div className="relative">
+                <select id="ev-carne" value={f.carne} onChange={set('carne')} className={`${INPUT} cursor-pointer appearance-none pr-7 ${f.carne ? '' : 'text-[#E7E0D2]/40'}`}>
+                  <option value="" className={OPCAO}>Selecione</option>
+                  {buffet.carnes.map((c) => <option key={c} value={c} className={OPCAO}>{c}</option>)}
+                </select>
+                <ChevronDown size={18} className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[#E7E0D2]/60" aria-hidden />
+              </div>
+            </Campo>
+          ) : null}
+        </fieldset>
+      )}
+
+      <fieldset className="col-span-6">
+        <legend className="text-sm text-[#E7E0D2]/70">Adicionais (opcional)</legend>
+        <label className={`mt-2.5 flex items-center justify-between gap-4 ${cartao(f.bebidas)}`}>
+          <input type="checkbox" checked={f.bebidas} onChange={(e) => setF((atual) => ({ ...atual, bebidas: e.target.checked }))} className="sr-only" />
+          <span>Bebidas sem álcool</span>
+          <span className={`text-sm ${f.bebidas ? 'text-[#171512]/80' : 'text-[#E7E0D2]/60'}`}>
+            {CARDAPIO.bebidasPorPessoa === null ? 'a combinar' : `+ ${formatarReais(CARDAPIO.bebidasPorPessoa)} por convidado`}
+          </span>
+        </label>
+
+        <Campo rotulo="Bolo" htmlFor="ev-bolo" className="mt-6">
+          <div className="relative">
+            <select id="ev-bolo" value={f.bolo} onChange={set('bolo')} className={`${INPUT} cursor-pointer appearance-none pr-7 ${f.bolo ? '' : 'text-[#E7E0D2]/40'}`}>
+              <option value="" className={OPCAO}>Sem bolo</option>
+              {CARDAPIO.saboresBolo.map((s) => <option key={s} value={s} className={OPCAO}>{s}</option>)}
+            </select>
+            <ChevronDown size={18} className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[#E7E0D2]/60" aria-hidden />
+          </div>
+        </Campo>
+
+        <p className="mt-6 text-sm text-[#E7E0D2]/70">Docinhos</p>
+        <div className="mt-2.5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {CARDAPIO.docinhos.map((d) => (
+            <label key={d} className={`${cartao(f.docinhos.includes(d))} text-center`}>
+              <input type="checkbox" checked={f.docinhos.includes(d)} onChange={alternarDocinho(d)} className="sr-only" />
+              {d}
             </label>
           ))}
         </div>
@@ -112,18 +184,24 @@ export default function ReservaEvento() {
       <div className="col-span-6 border-t border-[#F1E9D5]/20 pt-6" aria-live="polite">
         <p className="text-sm text-[#E7E0D2]/70">Estimativa</p>
         {estimativa ? (
+          <>
           <dl className="mt-3 space-y-2">
             {estimativa.itens.map((i) => (
               <div key={i.rotulo} className="flex items-baseline justify-between gap-4">
                 <dt>{i.rotulo}</dt>
-                <dd className={i.valor === null ? 'text-[#E7E0D2]/50' : ''}>{reais(i.valor)}</dd>
+                <dd className={`shrink-0 ${i.valor === null || i.incluso ? 'text-[#E7E0D2]/50' : ''}`}>{reais(i)}</dd>
               </div>
             ))}
             <div className="flex items-baseline justify-between gap-4 pt-2 text-xl text-[#F1E9D5] [font-family:Bitter,Georgia,serif]">
-              <dt>Total estimado</dt>
-              <dd className={estimativa.total === null ? 'text-[#E7E0D2]/50' : ''}>{reais(estimativa.total)}</dd>
+              <dt>{estimativa.completo ? 'Total estimado' : 'Total parcial'}</dt>
+              <dd>{formatarReais(estimativa.total)}</dd>
             </div>
           </dl>
+          {!estimativa.completo && (
+            <p className="mt-2 text-sm text-[#E7E0D2]/60">Os itens &quot;a combinar&quot; entram no valor final.</p>
+          )}
+          {estimativa.avisos.map((a) => <p key={a} className="mt-2 text-sm text-[#E5B66F]">{a}</p>)}
+          </>
         ) : (
           <p className="mt-3 text-[#E7E0D2]/50">Escolha entre só o salão ou salão com buffet para ver a estimativa.</p>
         )}

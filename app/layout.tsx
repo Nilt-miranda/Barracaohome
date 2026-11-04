@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
   title: 'Barracão da Praça',
-  description: 'Comida brasileira, cerveja gelada e bons momentos. Faça seu evento no Barracão da Praça.',
+  description: 'Comida boa, feita com amor. Faça seu evento no Barracão da Praça: salão para até 60 pessoas, buffets, bolo, docinhos e bebidas.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
