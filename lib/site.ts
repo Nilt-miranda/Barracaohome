@@ -10,18 +10,14 @@ export const SLOGAN = 'Comida boa, feita com amor.';
 // Eventos, em reais. null = valor ainda não definido (aparece "a combinar" na calculadora).
 export const CARDAPIO_EVENTOS: CardapioEventos = {
   salao: 2000, // locação do espaço; com buffet o aluguel sai de graça
-  capacidadeSalao: 60,
+  capacidadeSalao: 70,
+  minimoPessoas: 20,
   buffets: [
     { nome: 'Massas com carne', precoPorPessoa: 75, carnes: ['Maminha', 'Cupim'] },
     { nome: 'Feijoada', precoPorPessoa: 85 },
     { nome: 'Bobó de camarão', precoPorPessoa: 85 },
   ],
   bebidasPorPessoa: 20, // bebidas sem álcool, por convidado
-  // Sabores sugeridos: confirmar com a cozinha. Preço do bolo ainda a definir.
-  saboresBolo: ['Chocolate', 'Ninho com morango', 'Prestígio', 'Doce de leite', 'Outro sabor (a combinar)'],
-  bolo: null,
-  docinhos: ['Brigadeiro', 'Beijinho', 'Docinhos temáticos'],
-  docinhosPorPessoa: null,
 };
 
 // O que vem na locação do espaço (sem buffet).
@@ -59,8 +55,8 @@ export const FOTOS_AMBIENTE = [
 
 // Fotos da faixa de eventos.
 export const FOTOS_EVENTOS = [
-  { src: '/site/mesa-do-bolo.webp', alt: 'Mesa de bolo e doces montada no salão' },
-  { src: '/site/docinhos.webp', alt: 'Brigadeiros e beijinhos na mesa de doces' },
+  { src: '/site/mesa-do-bolo.webp', alt: 'Mesa de doces montada no salão' },
+  { src: '/site/docinhos.webp', alt: 'Mesa de doces de um evento no salão' },
   { src: '/site/mesa-decorada.webp', alt: 'Mesa decorada com flores secas e guirlanda' },
 ];
 

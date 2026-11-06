@@ -38,7 +38,7 @@ function Campo({ rotulo, htmlFor, className = '', children }: {
 
 export default function ReservaEvento() {
   const [f, setF] = useState<Reserva>(reservaVazia);
-  const set = (campo: 'nome' | 'pessoas' | 'tipo' | 'servico' | 'carne' | 'bolo' | 'data' | 'observacoes') =>
+  const set = (campo: 'nome' | 'pessoas' | 'tipo' | 'servico' | 'carne' | 'data' | 'observacoes') =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setF((atual) => ({ ...atual, [campo]: e.target.value }));
 
@@ -50,11 +50,6 @@ export default function ReservaEvento() {
   // Trocar de buffet zera a carne: cada buffet tem as suas opções (ou nenhuma).
   const escolherBuffet = (e: React.ChangeEvent<HTMLInputElement>) =>
     setF((atual) => ({ ...atual, buffet: e.target.value, carne: '' }));
-  const alternarDocinho = (d: string) => () =>
-    setF((atual) => ({
-      ...atual,
-      docinhos: atual.docinhos.includes(d) ? atual.docinhos.filter((x) => x !== d) : [...atual.docinhos, d],
-    }));
 
   const comBuffet = f.servico === COM_BUFFET;
   const buffet = comBuffet ? CARDAPIO.buffets.find((b) => b.nome === f.buffet) : undefined;
@@ -81,7 +76,8 @@ export default function ReservaEvento() {
       </Campo>
 
       <Campo rotulo="Número de pessoas" htmlFor="ev-pessoas" className="col-span-6 sm:col-span-2">
-        <input id="ev-pessoas" value={f.pessoas} onChange={set('pessoas')} placeholder="Ex: 20" inputMode="numeric" className={INPUT} />
+        <input id="ev-pessoas" value={f.pessoas} onChange={set('pessoas')} placeholder={`Mínimo ${CARDAPIO.minimoPessoas}`} inputMode="numeric" aria-describedby="ev-pessoas-ajuda" className={INPUT} />
+        <p id="ev-pessoas-ajuda" className="mt-1.5 text-xs text-[#E7E0D2]/50">De {CARDAPIO.minimoPessoas} a {CARDAPIO.capacidadeSalao} pessoas</p>
       </Campo>
 
       <Campo rotulo="Tipo de evento" htmlFor="ev-tipo" className="col-span-6 sm:col-span-4">
@@ -134,37 +130,6 @@ export default function ReservaEvento() {
         </fieldset>
       )}
 
-      <fieldset className="col-span-6">
-        <legend className="text-sm text-[#E7E0D2]/70">Adicionais (opcional)</legend>
-        <label className={`mt-2.5 flex items-center justify-between gap-4 ${cartao(f.bebidas)}`}>
-          <input type="checkbox" checked={f.bebidas} onChange={(e) => setF((atual) => ({ ...atual, bebidas: e.target.checked }))} className="sr-only" />
-          <span>Bebidas sem álcool</span>
-          <span className={`text-sm ${f.bebidas ? 'text-[#171512]/80' : 'text-[#E7E0D2]/60'}`}>
-            {CARDAPIO.bebidasPorPessoa === null ? 'a combinar' : `+ ${formatarReais(CARDAPIO.bebidasPorPessoa)} por convidado`}
-          </span>
-        </label>
-
-        <Campo rotulo="Bolo" htmlFor="ev-bolo" className="mt-6">
-          <div className="relative">
-            <select id="ev-bolo" value={f.bolo} onChange={set('bolo')} className={`${INPUT} cursor-pointer appearance-none pr-7 ${f.bolo ? '' : 'text-[#E7E0D2]/40'}`}>
-              <option value="" className={OPCAO}>Sem bolo</option>
-              {CARDAPIO.saboresBolo.map((s) => <option key={s} value={s} className={OPCAO}>{s}</option>)}
-            </select>
-            <ChevronDown size={18} className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[#E7E0D2]/60" aria-hidden />
-          </div>
-        </Campo>
-
-        <p className="mt-6 text-sm text-[#E7E0D2]/70">Docinhos</p>
-        <div className="mt-2.5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {CARDAPIO.docinhos.map((d) => (
-            <label key={d} className={`${cartao(f.docinhos.includes(d))} text-center`}>
-              <input type="checkbox" checked={f.docinhos.includes(d)} onChange={alternarDocinho(d)} className="sr-only" />
-              {d}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
       <Campo rotulo="Data" htmlFor="ev-data" className="col-span-6 sm:col-span-2">
         <input id="ev-data" type="date" value={f.data} onChange={set('data')} className={INPUT} />
       </Campo>
@@ -205,7 +170,10 @@ export default function ReservaEvento() {
         ) : (
           <p className="mt-3 text-[#E7E0D2]/50">Escolha entre só o salão ou salão com buffet para ver a estimativa.</p>
         )}
-        <p className="mt-3 text-sm text-[#E7E0D2]/60">O valor final é combinado com a nossa equipe pelo WhatsApp.</p>
+        {CARDAPIO.bebidasPorPessoa !== null && (
+          <p className="mt-3 text-sm text-[#E7E0D2]/60">* Bebidas não alcoólicas: {formatarReais(CARDAPIO.bebidasPorPessoa)} por pessoa.</p>
+        )}
+        <p className="mt-1.5 text-sm text-[#E7E0D2]/60">O valor final é combinado com a nossa equipe pelo WhatsApp.</p>
       </div>
 
       <button

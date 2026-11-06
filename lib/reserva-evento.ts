@@ -5,9 +5,6 @@ export type ReservaEvento = {
   servico: string; // um dos SERVICOS
   buffet: string; // nome de um dos buffets, quando o serviço tem buffet
   carne: string; // carne do buffet que oferece escolha (ex.: massas)
-  bebidas: boolean; // bebidas sem álcool para os convidados
-  bolo: string; // sabor do bolo; vazio = sem bolo
-  docinhos: string[]; // tipos de docinhos escolhidos
   data: string; // yyyy-mm-dd (input type="date")
   inicio: string; // hh:mm
   termino: string; // hh:mm, opcional
@@ -33,16 +30,13 @@ export type Buffet = { nome: string; precoPorPessoa: number | null; carnes?: str
 export type CardapioEventos = {
   salao: number | null; // aluguel do salão, valor fixo; com buffet o aluguel sai de graça
   capacidadeSalao: number;
+  minimoPessoas: number;
   buffets: Buffet[];
-  bebidasPorPessoa: number | null;
-  saboresBolo: string[];
-  bolo: number | null;
-  docinhos: string[];
-  docinhosPorPessoa: number | null;
+  bebidasPorPessoa: number | null; // só informativo: aparece como nota na estimativa
 };
 
 export const reservaVazia: ReservaEvento = {
-  nome: '', pessoas: '', tipo: '', servico: '', buffet: '', carne: '', bebidas: false, bolo: '', docinhos: [],
+  nome: '', pessoas: '', tipo: '', servico: '', buffet: '', carne: '',
   data: '', inicio: '', termino: '', observacoes: '',
 };
 
@@ -53,6 +47,7 @@ const buffetEscolhido = (r: Pick<ReservaEvento, 'servico' | 'buffet'>, cardapio:
 export function validarReserva(r: ReservaEvento, hoje: string, cardapio: CardapioEventos): string | null {
   if (!r.nome.trim()) return 'Informe seu nome';
   if (!/^\d+$/.test(r.pessoas.trim()) || Number(r.pessoas) < 1) return 'Informe o número de pessoas';
+  if (Number(r.pessoas) < cardapio.minimoPessoas) return `O mínimo para eventos é de ${cardapio.minimoPessoas} pessoas`;
   if (!r.tipo) return 'Selecione o tipo de evento';
   if (!SERVICOS.includes(r.servico)) return 'Escolha entre só o salão ou salão com buffet';
   if (r.servico === COM_BUFFET) {
@@ -60,8 +55,6 @@ export function validarReserva(r: ReservaEvento, hoje: string, cardapio: Cardapi
     if (!buffet) return 'Escolha o buffet';
     if (buffet.carnes?.length && !buffet.carnes.includes(r.carne)) return `Escolha a carne do buffet de ${buffet.nome.toLowerCase()}`;
   }
-  if (r.bolo && !cardapio.saboresBolo.includes(r.bolo)) return 'Escolha um sabor de bolo da lista';
-  if (r.docinhos.some((d) => !cardapio.docinhos.includes(d))) return 'Escolha os docinhos da lista';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(r.data)) return 'Informe a data do evento';
   if (r.data < hoje) return 'A data do evento já passou';
   if (!r.inicio) return 'Informe o horário de início';
@@ -102,11 +95,10 @@ const quantas = (pessoas: number) => `${pessoas} ${pessoas === 1 ? 'pessoa' : 'p
 
 /**
  * Calculadora do evento. Só o salão: aluguel fixo. Com buffet: valor por pessoa e o salão incluso.
- * Adicionais (bebidas, bolo, docinhos) entram como itens próprios. Devolve null enquanto o
- * serviço não foi escolhido.
+ * Devolve null enquanto o serviço não foi escolhido.
  */
 export function estimarEvento(
-  r: Pick<ReservaEvento, 'servico' | 'pessoas' | 'buffet' | 'carne' | 'bebidas' | 'bolo' | 'docinhos'>,
+  r: Pick<ReservaEvento, 'servico' | 'pessoas' | 'buffet' | 'carne'>,
   cardapio: CardapioEventos,
 ): Estimativa | null {
   if (!SERVICOS.includes(r.servico)) return null;
@@ -123,13 +115,10 @@ export function estimarEvento(
   } else {
     itens.push({ rotulo: 'Aluguel do salão', valor: cardapio.salao });
   }
-  if (r.bebidas) itens.push({ rotulo: comPessoas('Bebidas sem álcool'), valor: porPessoa(cardapio.bebidasPorPessoa) });
-  if (r.bolo) itens.push({ rotulo: `Bolo (${r.bolo.toLowerCase()})`, valor: cardapio.bolo });
-  if (r.docinhos.length) itens.push({ rotulo: `Docinhos (${r.docinhos.join(', ').toLowerCase()})`, valor: porPessoa(cardapio.docinhosPorPessoa) });
 
-  const avisos = pessoas > cardapio.capacidadeSalao
-    ? [`Acima de ${cardapio.capacidadeSalao} pessoas: confirme a capacidade e o valor com a nossa equipe.`]
-    : [];
+  const avisos: string[] = [];
+  if (pessoas > 0 && pessoas < cardapio.minimoPessoas) avisos.push(`O mínimo para eventos é de ${cardapio.minimoPessoas} pessoas.`);
+  if (pessoas > cardapio.capacidadeSalao) avisos.push(`Acima de ${cardapio.capacidadeSalao} pessoas: confirme a capacidade e o valor com a nossa equipe.`);
   return {
     itens,
     total: itens.reduce((soma, i) => soma + (i.valor ?? 0), 0),
@@ -155,9 +144,6 @@ export function mensagemReserva(r: ReservaEvento, cardapio?: CardapioEventos): s
     `*Serviço:* ${r.servico}`,
   ];
   if (r.servico === COM_BUFFET && r.buffet) linhas.push(`*Buffet:* ${r.buffet}${r.carne ? ` (${r.carne.toLowerCase()})` : ''}`);
-  if (r.bebidas) linhas.push('*Bebidas sem álcool:* sim');
-  if (r.bolo) linhas.push(`*Bolo:* ${r.bolo}`);
-  if (r.docinhos.length) linhas.push(`*Docinhos:* ${r.docinhos.join(', ')}`);
   linhas.push(
     `*Data:* ${formatData(r.data)}`,
     `*Horário:* ${r.termino ? `${r.inicio} às ${r.termino}` : `a partir das ${r.inicio}`}`,

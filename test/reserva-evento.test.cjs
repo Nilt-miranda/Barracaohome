@@ -16,19 +16,18 @@ function load(file) {
 const { validarReserva, mensagemReserva, linkWhatsApp, mascaraHora, completarHora, estimarEvento, formatarReais } =load('lib/reserva-evento.ts');
 
 const cardapio = {
-  salao: 2000, capacidadeSalao: 60,
+  salao: 2000, capacidadeSalao: 70, minimoPessoas: 20,
   buffets: [
     { nome: 'Massas com carne', precoPorPessoa: 75, carnes: ['Maminha', 'Cupim'] },
     { nome: 'Feijoada', precoPorPessoa: 85 },
     { nome: 'Bobó de camarão', precoPorPessoa: 85 },
   ],
-  bebidasPorPessoa: 20, saboresBolo: ['Chocolate', 'Prestígio'], bolo: null,
-  docinhos: ['Brigadeiro', 'Beijinho', 'Docinhos temáticos'], docinhosPorPessoa: null,
+  bebidasPorPessoa: 20,
 };
 
 const ok = {
   nome: ' Maria Silva ', pessoas: '25', tipo: 'Aniversário', servico: 'Salão com buffet', buffet: 'Feijoada', carne: '',
-  bebidas: false, bolo: '', docinhos: [], data: '2026-11-07', inicio: '19:00', termino: '23:00', observacoes: '',
+  data: '2026-11-07', inicio: '19:00', termino: '23:00', observacoes: '',
 };
 const validar = (r, hoje) => validarReserva(r, hoje, cardapio);
 
@@ -50,9 +49,9 @@ test('reserva so e aceita com nome, pessoas, tipo, data futura e horario de inic
   assert.equal(validar({ ...ok, buffet: 'Churrasco' }, hoje), 'Escolha o buffet');
   assert.equal(validar({ ...ok, buffet: 'Massas com carne' }, hoje), 'Escolha a carne do buffet de massas com carne');
   assert.equal(validar({ ...ok, buffet: 'Massas com carne', carne: 'Cupim' }, hoje), null);
-  assert.equal(validar({ ...ok, bolo: 'Chocolate', docinhos: ['Brigadeiro', 'Beijinho'], bebidas: true }, hoje), null);
-  assert.equal(validar({ ...ok, bolo: 'Morango' }, hoje), 'Escolha um sabor de bolo da lista');
-  assert.equal(validar({ ...ok, docinhos: ['Cajuzinho'] }, hoje), 'Escolha os docinhos da lista');
+  // Minimo de 20 pessoas por evento.
+  assert.equal(validar({ ...ok, pessoas: '19' }, hoje), 'O mínimo para eventos é de 20 pessoas');
+  assert.equal(validar({ ...ok, pessoas: '20' }, hoje), null);
   assert.equal(validar({ ...ok, data: '' }, hoje), 'Informe a data do evento');
   assert.equal(validar({ ...ok, data: '2026-10-02' }, hoje), 'A data do evento já passou');
   assert.equal(validar({ ...ok, inicio: '' }, hoje), 'Informe o horário de início');
@@ -108,30 +107,19 @@ test('so o salao cobra o aluguel; com buffet o salao sai incluso e o buffet e po
   assert.equal(semPessoas.completo, false);
 });
 
-test('adicionais: bebidas por convidado; bolo e docinhos ficam a combinar enquanto sem preco', () => {
-  const r = { ...ok, bebidas: true, bolo: 'Chocolate', docinhos: ['Brigadeiro', 'Docinhos temáticos'] };
-  const e = estimarEvento(r, cardapio);
-  assert.deepEqual(e.itens.slice(2), [
-    { rotulo: 'Bebidas sem álcool (25 pessoas)', valor: 500 },
-    { rotulo: 'Bolo (chocolate)', valor: null },
-    { rotulo: 'Docinhos (brigadeiro, docinhos temáticos)', valor: null },
-  ]);
-  assert.equal(e.total, 2625);
-  assert.equal(e.completo, false);
-  // Com precos definidos tudo entra no total.
-  const fechado = estimarEvento(r, { ...cardapio, bolo: 300, docinhosPorPessoa: 10 });
-  assert.equal(fechado.total, 2125 + 500 + 300 + 250);
-  assert.equal(fechado.completo, true);
-  // Acima da capacidade do salao aparece aviso.
-  assert.deepEqual(estimarEvento({ ...ok, pessoas: '61' }, cardapio).avisos,
-    ['Acima de 60 pessoas: confirme a capacidade e o valor com a nossa equipe.']);
+test('avisos de minimo de pessoas e de capacidade do salao', () => {
+  assert.deepEqual(estimarEvento({ ...ok, pessoas: '12' }, cardapio).avisos, ['O mínimo para eventos é de 20 pessoas.']);
+  assert.deepEqual(estimarEvento({ ...ok, pessoas: '20' }, cardapio).avisos, []);
+  assert.deepEqual(estimarEvento({ ...ok, pessoas: '71' }, cardapio).avisos,
+    ['Acima de 70 pessoas: confirme a capacidade e o valor com a nossa equipe.']);
 });
 
-test('mensagem leva buffet, adicionais e a estimativa (parcial quando ha itens a combinar)', () => {
-  const r = { ...ok, buffet: 'Massas com carne', carne: 'Cupim', bebidas: true, bolo: 'Prestígio', docinhos: ['Brigadeiro', 'Beijinho'] };
-  const m = mensagemReserva(r, cardapio);
-  assert.match(m, /\n\*Buffet:\* Massas com carne \(cupim\)\n\*Bebidas sem álcool:\* sim\n\*Bolo:\* Prestígio\n\*Docinhos:\* Brigadeiro, Beijinho\n\*Data:\*/);
-  assert.match(m, /\n\*Estimativa parcial pelo site:\* R\$ 2\.375,00 \(a combinar: bolo, docinhos\)$/);
+test('mensagem leva buffet, carne e a estimativa (parcial quando falta valor)', () => {
+  const m = mensagemReserva({ ...ok, buffet: 'Massas com carne', carne: 'Cupim' }, cardapio);
+  assert.match(m, /\n\*Buffet:\* Massas com carne \(cupim\)\n\*Data:\*/);
+  assert.match(m, /\n\*Estimativa pelo site:\* R\$ 1\.875,00$/);
+  // Buffet ainda sem preco: nada a somar, a mensagem sai sem estimativa.
+  assert.doesNotMatch(mensagemReserva(ok, { ...cardapio, buffets: [{ nome: 'Feijoada', precoPorPessoa: null }] }), /Estimativa/);
   assert.match(mensagemReserva(ok, cardapio), /\n\*Estimativa pelo site:\* R\$ 2\.125,00$/);
   assert.doesNotMatch(mensagemReserva(ok), /Estimativa/);
   assert.equal(formatarReais(3500), 'R$ 3.500,00');

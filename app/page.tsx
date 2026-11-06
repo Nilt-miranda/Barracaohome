@@ -16,6 +16,16 @@ const LINK = 'transition-colors hover:text-[#F1E9D5]';
 const CLARO = 'bg-[#34503D]';
 const FAIXA = 'mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:py-24';
 
+const RODAPE_TITULO = 'text-xs uppercase tracking-[0.14em] text-[#E7E0D2]/50';
+const NAV_RODAPE = [
+  { href: '#inicio', rotulo: 'Início' },
+  { href: '#historia', rotulo: 'Nossa história' },
+  { href: '#cozinha', rotulo: 'Quem faz acontecer' },
+  { href: '#eventos', rotulo: 'Eventos' },
+  { href: '#ambiente', rotulo: 'O ambiente' },
+  { href: '#contato', rotulo: 'Contato' },
+];
+
 const whatsapp = linkWhatsApp(WHATSAPP_EVENTOS, 'Olá! Vim pelo site do Barracão da Praça.');
 // '5511988379211' -> '(11) 98837-9211'
 const whatsappNumero = WHATSAPP_EVENTOS.replace(/^55(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3');
@@ -38,7 +48,7 @@ function Texto({ paragrafos, pendente }: { paragrafos: string[]; pendente: strin
 
 export default function Home() {
   const [foto1, foto2, foto3, foto4, foto5] = FOTOS_AMBIENTE;
-  const { salao, capacidadeSalao, buffets } = CARDAPIO_EVENTOS;
+  const { salao, capacidadeSalao, minimoPessoas, buffets } = CARDAPIO_EVENTOS;
 
   return (
     <main className="min-h-screen bg-[#2B4433] text-[#E7E0D2] [font-family:DM_Sans,Arial,sans-serif]">
@@ -92,7 +102,7 @@ export default function Home() {
               <p className="text-sm uppercase tracking-wide text-[#E7E0D2]/60">Locação do espaço</p>
               <p className={`mt-2 text-3xl ${TITULO}`}>
                 {salao === null ? 'Valor a combinar' : formatarReais(salao)}
-                <span className="ml-2 text-base text-[#E7E0D2]/70 [font-family:DM_Sans,Arial,sans-serif]">para até {capacidadeSalao} pessoas</span>
+                <span className="ml-2 text-base text-[#E7E0D2]/70 [font-family:DM_Sans,Arial,sans-serif]">de {minimoPessoas} a {capacidadeSalao} pessoas</span>
               </p>
               <ul className="mt-4 space-y-1.5">
                 {INCLUSO_SALAO.map((i) => <li key={i}>{i}</li>)}
@@ -166,10 +176,6 @@ export default function Home() {
                 <dd><a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className={LINK}>{instagramPerfil}</a></dd>
               </div>
             )}
-            <div>
-              <dt className="text-sm text-[#E7E0D2]/60">WhatsApp</dt>
-              <dd><a href={whatsapp} target="_blank" rel="noopener noreferrer" className={LINK}>Chamar no WhatsApp</a></dd>
-            </div>
           </dl>
         </div>
         <div className="relative aspect-[3/2] bg-[#2B4433] lg:col-span-6 lg:col-start-7">
@@ -183,36 +189,52 @@ export default function Home() {
       </section>
 
       {/* ---- Rodapé ---- */}
-      <footer>
-        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:grid-cols-2 sm:px-8 lg:grid-cols-12">
-          <div className="lg:col-span-5"><Marca tamanho={44} /></div>
+      {/* Mesmo verde do cabeçalho: a página abre e fecha com o mesmo tom. */}
+      <footer className="border-t border-[#F1E9D5]/10 bg-[#223729]">
+        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:grid-cols-2 sm:px-8 lg:grid-cols-12 lg:gap-8">
+          <div className="sm:col-span-2 lg:col-span-3">
+            <Marca tamanho={52} />
+            <p className="mt-4 text-[#F1E9D5] [font-family:Bitter,Georgia,serif]">{SLOGAN}</p>
+            <a href="#eventos" className="mt-6 inline-block bg-[#C98732] px-5 py-3 text-sm font-medium text-[#171512] transition-colors hover:bg-[#d7953f]">
+              Organize seu evento
+            </a>
+          </div>
+
+          <nav aria-label="Rodapé" className="lg:col-span-3">
+            <p className={RODAPE_TITULO}>Navegue</p>
+            <ul className="mt-3 space-y-2">
+              {NAV_RODAPE.map((n) => <li key={n.href}><a href={n.href} className={LINK}>{n.rotulo}</a></li>)}
+            </ul>
+          </nav>
 
           {ENDERECO && (
-            <div className="lg:col-span-4">
-              <p className="text-sm text-[#E7E0D2]/60">Endereço</p>
-              <p className="mt-1.5">{ENDERECO}</p>
-              <a href={rota} target="_blank" rel="noopener noreferrer" className={`mt-1.5 inline-block text-sm ${LINK}`}>Como chegar</a>
+            <div className="lg:col-span-3">
+              <p className={RODAPE_TITULO}>Visite</p>
+              <p className="mt-3 leading-relaxed">{ENDERECO}</p>
+              {HORARIOS.map((h) => <p key={h} className="mt-1 text-sm text-[#E7E0D2]/70">{h}</p>)}
+              <a href={rota} target="_blank" rel="noopener noreferrer" className={`mt-3 inline-block text-sm text-[#E5B66F] ${LINK}`}>Como chegar →</a>
             </div>
           )}
 
           <div className="lg:col-span-3">
-            <p className="text-sm text-[#E7E0D2]/60">Fale com a gente</p>
-            <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="mt-1.5 flex items-center gap-2 transition-colors hover:text-[#F1E9D5]">
+            <p className={RODAPE_TITULO}>Fale com a gente</p>
+            <a href={whatsapp} target="_blank" rel="noopener noreferrer" className={`mt-3 flex items-center gap-2 ${LINK}`}>
               <IconeWhatsApp size={18} />
               {whatsappNumero || 'WhatsApp'}
             </a>
             {INSTAGRAM_URL && (
-              <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 transition-colors hover:text-[#F1E9D5]">
+              <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className={`mt-2 flex items-center gap-2 ${LINK}`}>
                 <IconeInstagram size={18} />
                 {instagramPerfil}
               </a>
             )}
+            <p className="mt-3 text-sm text-[#E7E0D2]/60">Eventos e reservas pelo WhatsApp.</p>
           </div>
         </div>
 
         <div className="border-t border-[#F1E9D5]/10">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-5 py-5 text-sm text-[#E7E0D2]/60 sm:px-8">
-            <span>© {new Date().getFullYear()} Barracão da Praça</span>
+          <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-5 text-sm text-[#E7E0D2]/60 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <span>© {new Date().getFullYear()} Barracão da Praça. Todos os direitos reservados.</span>
             <span>
               Desenvolvido por{' '}
               <a href="https://digitalnexusgroup.vercel.app" target="_blank" rel="noopener noreferrer" className={LINK}>DNG</a>
